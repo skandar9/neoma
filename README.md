@@ -241,26 +241,28 @@ public function update(Request $request, Journal $journal)
     return back()->withStatus(__('Journal is updated successfully'));
 }
 ```
-This *update* function represents a form for updating journal information. It handles the validation of the incoming request, updates the journal entry in the database, and manages the deletion and creation of JournalIndexing entities associated with the journal.
-It called from this route that I defined into *routes\web.php* file:
-```php 
+The `update` function represents a form for updating journal information. It handles the validation of the incoming request, updates the journal entry in the database, and manages the deletion and creation of JournalIndexing entities associated with the journal.
+
+This function is called from the following route defined in the `routes\web.php` file:
+```php
 Route::Resource('/dashboard/journals', JournalController::class)->except(['show']);
 ```
-Explain for some fields included inside block that validates the request data using the validate method:
-- slug: should be a string and must be unique in the journals table, except when updating the current journal (ignore($journal->id) is used to ignore the current journal's ID during uniqueness check).
-- 'category_id' should exist in the categories table.
-- 'frequency' should have one of the values: monthly, quarterly, yearly, semi_annually, or irregular.
-- 'issn' (represents the International Standard Serial Number) is optional but, if provided,
-  should match the regex pattern ([0-9]{4}\-[0-9]{4}), this pattern requires the 'issn' to consist of eight digits separated by a hyphen (e.g., 1234-5678), and must be unique in the journals table, except when updating the current journal.
+Explain for some fields included inside block that validates the request data using the `validate` method:
 
-The code maybe call two methods, [Upload file & delete file if exist](#upload/delete-file) from helper class.
+- `slug`: Should be a string and must be unique in the journals table, except when updating
+   the current journal(`ignore($journal->id)`   is used to ignore the current journal's ID during uniqueness check).
+- `category_id`: Should exist in the categories table.
+- `frequency`: Should have one of the values: monthly, quarterly, yearly, semi_annually, or irregular.
+- `issn` (represents the International Standard Serial Number): Optional, but if provided,
+   it should match the regex pattern `([0-9]{4}\-[0-9]{4})`. This pattern requires the `issn` to consist of eight digits separated by a hyphen (e.g., 1234-5678) and must be unique in the journals table, except when updating the current journal.
 
-If the request contains *indexing_ids*, it performs the following steps:
-- It retrieves all JournalIndexing entities associated with the current journal
-  by querying the JournalIndexing model where the journal_id matches the ID of the current journal.
-- It iterates over the retrieved indexing_entities and deletes them one by one using the delete method.
-- then, it iterates over the *indexing_ids* array from the request and creates new JournalIndexing entries for each value.
-  Each entry is associated with the current journal (using journal_id) and the corresponding indexing entity ID (using indexing_entity_id).
+The code may call two methods, [Upload file & delete file if exist](#upload/delete-file), from the helper class.
+
+If the request contains `indexing_ids`, it performs the following steps:
+
+1. It retrieves all JournalIndexing entities associated with the current journal by querying the JournalIndexing model where the `journal_id` matches the ID of the current journal.
+2. It iterates over the retrieved `indexing_entities` and deletes them one by one using the `delete` method.
+3. Then, it iterates over the `indexing_ids` array from the request and creates new JournalIndexing entries for each value. Each entry is associated with the current journal (using `journal_id`) and the corresponding indexing entity ID (using `indexing_entity_id`).
 
 [🔝 Back to contents](#contents)
 
@@ -296,6 +298,7 @@ app\Http\Controllers\Dashboard\ManuscriptController.php:
 ```php
 public function archived_manuscripts()
 {
+    // Fetch manuscripts associated with the logged-in user (editor) that have a status other than "pending"
     $manuscripts = to_user(Auth::user())->editor_manuscripts()->where('manuscript_editors.status', '!=', 'pending')->get();
     $type = 'archived';
     return view('dashboard.manuscript_view')->with(['manuscripts' => $manuscripts, 'type' => $type]);
@@ -303,55 +306,62 @@ public function archived_manuscripts()
 ```
 ![archived manuscripts page from dashboard](/images/archived_manuscript.png)
 
-The purpose of *archived_manuscripts()* method is to fetch manuscripts associated with the logged-in user (editor) and render a *'manuscript_view'* (shown in the picture) with the manuscripts and that have a status other than "pending" (i.e., archived manuscripts/refused manuscripts). The view can then display this data to the user, potentially allowing them to take further actions on the manuscripts.
-It called from this route that I defined into *routes\web.php* file:
-```php 
+The purpose of the `archived_manuscripts()` method is to fetch manuscripts associated with the logged-in user (editor) and render the 'manuscript_view' page (as shown in the picture) with the retrieved manuscripts. Only manuscripts that have a status other than "pending" (i.e., archived manuscripts/refused manuscripts) are included. The view can then display this data to the user and provide them with the ability to perform further actions on the manuscripts.
+This method is called from the following route defined in the `routes\web.php` file:
+```php
 Route::get('/dashboard/manuscripts/archived', [ManuscriptController::class, 'archived_manuscripts'])->name('archived');
 ```
-The [editor_manuscripts()](#user) is a relationship defined on the User model that represents the manuscripts assigned to the editor.
+The [editor_manuscripts()](#editor_manuscripts()-relationship) is a relationship defined on the User model that represents the manuscripts assigned to the editor.
 
 By clicking on the 'info' icon (as shown in the picture), it redirects to the detail page of a specific manuscript by calling the ["Show manuscript" function](#show-manuscript).
 
 [🔝 Back to contents](#contents)
 
-### **user**
+### **editor_manuscripts()-relationship**
 
-app\Models\User.php:
+**File:** `app\Models\User.php`
 
 ```php
 .
 .
 .
-public function editor_manuscripts(){
-    return $this->belongsToMany(Manuscript::class,'manuscript_editors','editor_id','manuscript_id');
+public function editor_manuscripts()
+{
+    // Establishes a many-to-many relationship between the User and Manuscript models
+    return $this->belongsToMany(Manuscript::class, 'manuscript_editors', 'editor_id', 'manuscript_id');
 }
 ```
-The *editor_manuscripts()* method establishes a many-to-many relationship between the user and the Manuscript. This relationship allows to retrieve the manuscripts associated with an specific editor.
 
-*'manuscript_editors'* argument, specifies the name of the intermediate table that connects the two models. This table I used to store the relationship between editors and manuscripts.
+The `editor_manuscripts()` method defines a many-to-many relationship between the User model and the Manuscript model. This relationship allows retrieving the manuscripts associated with a specific editor.
 
-*'editor_id'* argument specifies the foreign key column in the intermediate table that corresponds to the User model.
+- The `'manuscript_editors'` argument specifies the name of the intermediate table that connects the two models. This table is used to store the relationship between editors and manuscripts.
 
-*'manuscript_id'* argument specifies the foreign key column in the intermediate table that corresponds to the related(Manuscript) model.
+- The `'editor_id'` argument specifies the foreign key column in the intermediate table that corresponds to the User model.
+
+- The `'manuscript_id'` argument specifies the foreign key column in the intermediate table that corresponds to the Manuscript model.
 
 [🔝 Back to contents](#contents)
 
-### **show-manuscript**
+### **show Manuscript**
 
-app\Http\Controllers\Dashboard\ManuscriptController.php:
+**File:** `app\Http\Controllers\Dashboard\ManuscriptController.php`
 
 ```php
 public function show($uuid)
 {
     $manuscript = Manuscript::where('uuid', $uuid)->firstOrFail();
+
+    // Check if the authenticated user is an editor associated with the same journal as the manuscript
     $editor = Editor::where([
         ['user_id', '=', Auth::user()->id],
         ['journal_id', '=', $manuscript->journal_id],
     ])->first();
 
-    if (!$editor)
+    if (!$editor) {
         abort(403);
+    }
 
+    // Retrieve additional data related to the manuscript
     $type = $editor->type;
     $editors = Editor::where('type', 'editor')->where('journal_id', $manuscript->journal_id)->get();
     $volumes = Volume::where('journal_id', $manuscript->journal_id)->get();
@@ -360,31 +370,40 @@ public function show($uuid)
 
     return view('dashboard.manuscript_details')->with([
         'manuscript' => $manuscript,
-        'type'       => $type,
-        'editors'    => $editors,
-        'issues'     => $issues,
-        'volumes'    => $volumes,
-        'editors'    => $editors,
+        'type' => $type,
+        'editors' => $editors,
+        'issues' => $issues,
+        'volumes' => $volumes,
     ]);
 }
 ```
-manuscript_details page:
-![manuscript details page from dashboard](/images/manuscript_details.png)
 
-The purpose of *show* method is to display the details of a specific manuscript identified by its UUID. It ensures that the authenticated user is an editor associated with the same journal as the manuscript. Then, it retrieves data related to the manuscript(the associated editors, volumes, and issues). Finally, it renders a *'manuscript_details'* view and passes the retrieved data to be displayed in the view (shown in the picture).
+The `show()` method fetches the details of a specific manuscript identified by its UUID. It performs the following steps:
 
-It retrieves an editor associated with the current user and the same journal as the manuscript. It searches for an Editor model where the user_id is equal to the authenticated user's ID *(Auth::user()->id)* and the journal_id matches the journal_id of the retrieved manuscript.
+1. Retrieves the manuscript from the database using the UUID provided.
+2. Checks if the authenticated user is an editor associated with the same journal as the manuscript by querying the Editor model.
+3. If the user is not an editor for the journal, it aborts with a 403 (Forbidden) error.
+4. Retrieves additional data related to the manuscript, including the editor's type, all editors associated with the journal, volumes associated with the journal, and issues associated with the volumes.
+5. Renders the 'manuscript_details' view and passes the retrieved data to be displayed in the view.
+
+The 'manuscript_details' view can then utilize the provided data to present the manuscript details to the user.
 
 [🔝 Back to contents](#contents)
 
-### **refuse-manuscript**
+### **Refuse Manuscript**
 
-app\Http\Controllers\Dashboard\ManuscriptController.php:
+**File:** `app\Http\Controllers\Dashboard\ManuscriptController.php`
 
 ```php
+use App\Jobs\SendEmailsJob;
+use App\Mail\RefuseManuscriptMail;
+
 public function refuse(Request $request, $uuid)
 {
+    // Retrieve the manuscript by UUID
     $manuscript = Manuscript::where('uuid', $uuid)->firstOrFail();
+
+    // Retrieve the author associated with the manuscript
     $author = Author::where([
         ['article_type', '=', Manuscript::class],
         ['article_id', '=', $manuscript->id],
@@ -394,6 +413,7 @@ public function refuse(Request $request, $uuid)
         'status' => 'refused',
     ]);
 
+    // Retrieve the ManuscriptEditor record for the editor and manuscript
     $manuscript_editor = ManuscriptEditor::where([
         ['manuscript_id', '=', $manuscript->id],
         ['editor_id', '=', Auth::user()->id],
@@ -405,18 +425,28 @@ public function refuse(Request $request, $uuid)
     ]);
 
     $details = [
-        'name'            => $author->first_name,
+        'name' => $author->first_name,
         'manuscript_uuid' => $manuscript->uuid,
-        'letter'          => $request->reason
+        'letter' => $request->reason
     ];
 
-    $emailJob = new SendEmailsJop($author->email, "App\Mail\RefuseManuscriptMail", $details);
+    $emailJob = new SendEmailsJob($author->email, RefuseManuscriptMail::class, $details);
     $this->dispatch($emailJob);
+
     return back();
 }
 ```
-The purpose of *refuse* method is to handle the refusal of a manuscript by editor of it. It updates the manuscript's status and the corresponding ManuscriptEditor record with the refusal reasons provided in the request.
-It then sends an email to the author notifying them about the refusal, by creates an instance of the *SendEmailsJop* job, passing the author's email, the class name of the RefuseManuscriptMail Mailable, and the *$details* array as parameters.
+
+The `refuse()` method handles the refusal of a manuscript by the editor. It performs the following steps:
+
+1. Retrieve the manuscript from the database using the UUID provided.
+2. Retrieve the author associated with the manuscript.
+3. Update the manuscript's status to 'refused'.
+4. Retrieve the ManuscriptEditor record for the editor and manuscript.
+5. Update the ManuscriptEditor record with the refusal reasons provided in the request.
+6. Prepare the details for the email notification, including the author's name, manuscript UUID, and refusal reasons.
+7. Create an instance of the `SendEmailsJob` and dispatch it to send the email to the author.
+8. Redirect back to the previous page.
 
 [🔝 Back to contents](#contents)
 
@@ -425,26 +455,6 @@ It then sends an email to the author notifying them about the refusal, by create
 ![Editor modal](/images/editor-modal.png)
 
 resources\views\dashboard\editor_view.blade.php:
-
-This HTML code represents a modal dialog for adding an editor.
-
-The modal has a unique id attribute set to "addModal" and defines its role as a dialog. The aria-labelledby attribute is used to associate the modal with the element that labels it, specified by the "addModalTitle" ID.
-
-The class modal-header (which included into modal content), It includes a title displayed as "Add editor" and a close button (represented by the button element) with the class close. The close button has a data attribute data-dismiss="modal" and an aria-label attribute for accessibility.
-
-The class modal-body (which included into modal content). It contains the form for adding an editor.
-The form for adding an editor is defined within a <form> element. It has the method attribute set to "post" and an action attribute that specifies the route where the form data will be submitted. The form uses  CSRF protection with @csrf.
-
-The form includes two sections:
-- The first section contains a label for the "Editor" field and a <select>
-  element with the name "user_id". It allows the user to select an editor from a  list of options. The options are generated dynamically using a foreach loop and  populated with data from the $users variable. The selected option is determined  based on the value of the "user_id" stored in the old input.
-  here I used thr Select2 library, which is a popular JavaScript library for enhancing select elements (dropdowns) with features like searching, tagging, and customization, and for that I included both the CSS and JavaScript files at the top of the page:
-  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
-- The second section contains a label for the "Type" field and a <select>
-  element with the name "type".It allows the user to select the type of editor from the available options"Editor In Chief," "Editor," or "Managing Editor." Similar to the previous section, the selected option is determined based on the value of the "type" stored in the old input (if any).
-
 ```html
 .
 .
@@ -510,39 +520,52 @@ The form includes two sections:
 .
 .
 ```
+
+This HTML code represents a modal dialog for adding an editor.
+
+The modal used in this section has the following attributes and components:
+
+- Unique ID: The modal has a unique `id` attribute set to "addModal" to differentiate it from other modals on the page.
+- Role: The `role` attribute is set to "dialog" to define the modal as a dialog box.
+- Aria-labelledby: The `aria-labelledby` attribute is used to associate the modal with the element that labels it. In this case, the label is specified by the "addModalTitle" ID.
+
+### Modal Header
+
+The modal header includes the following elements:
+
+- Title: The `modal-header` class is added to the modal content, displaying the title as "Add editor."
+- Close button: A close button is represented by the `button` element with the class `close`. It has a data attribute `data-dismiss="modal"` to enable the closing functionality. The `aria-label` attribute is provided for accessibility purposes.
+
+### Modal Body
+
+The modal body, included in the modal content, contains the form for adding an editor. The form is defined within a `<form>` element with the following attributes:
+
+- Method: The `method` attribute is set to "post" to specify that the form data will be submitted using the HTTP POST method.
+- Action: The `action` attribute specifies the route where the form data will be submitted.
+- CSRF Protection: The form utilizes CSRF protection with the `@csrf` directive to ensure secure data submission.
+
+The form consists of two sections:
+
+1. First Section:
+   - Label: The first section includes a label for the "Editor" field.
+   - Select Element: A `<select>` element with the name "user_id" is present, allowing the user to select an editor from a list of  options. The options are dynamically generated using a `foreach` loop and populated with data from the `$users` variable. The selected option is determined based on the value of the "user_id" stored in the old input.
+   - Select2 Library: The Select2 library is used to enhance the functionality of the select element, providing features like searching, tagging, and customization. To utilize Select2, the necessary CSS and JavaScript files are included at the top of the page:
+     ```html
+     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+     ```
+
+2. Second Section:
+   - Label: The second section contains a label for the "Type" field.
+   - Select Element: Another `<select>` element with the name "type" allows the user to select the type of editor from the available options: "Editor In Chief," "Editor," or "Managing Editor." Similar to the previous section, the selected option is determined based on the value of the "type" stored in the old input (if any).
+
 [🔝 Back to contents](#contents)
 
 ### **authors**
 
+This section provides a form for adding authors to a specific paper. The form allows users to input information such as the author's first name, last name, email, affiliation, and country.
+
 resources\views\dashboard\paper_create.blade.php:
-
-The provided code represents form for adding authors to a specific paper.
-
-The form includes a section for adding authors to the paper. It consists of a table with input fields for the author's *first name*, *last name*, *email*, *affiliation*, and a dropdown menu for selecting the *country*.
-
-There is an "Add" button with the id "add-button". When clicked, it clones the first author row and appends it to the table of authors' list.
-Addition of new author depending on JavaScript code includes a jQuery function that handles the addition of new author rows. It clones the first author row and appends it to the table. It also clears the input fields in the cloned row.
-
-Each author row has a delete button with an onclick attribute that triggers the deleteEntry() function. This function removes the corresponding author row from the table.
-
-The first script includes the jQuery library by loading it from the CDN (Content Delivery Network). This allows the use of jQuery functions and selectors in the script.
-
-The jQuery(function($){}) syntax is a shortcut for the $(document).ready() function, which ensures that the script is executed when the DOM (Document Object Model) is fully loaded and ready to be manipulated.
-
-The script initializes variables authors_list and author_row.
-
-authors_list is assigned the jQuery object representing the element with the ID authors-list, which is the table body where author rows are added.
-author_row is assigned the cloned version of the first author row in the table.
-The $('#add-button').click() function is bound to the click event of the element with the ID add-button (the "Add" button). When this button is clicked, the function is executed.
-
-It appends a cloned version of author_row to the authors_list table.
-It sets the value of the last select element within the appended row to an empty string.
-It retrieves all input elements within the appended row and sets their values to empty strings using a loop.
-The second script defines the deleteEntry(entry) function, which is called when the delete button of an author row is clicked. The function is responsible for removing the corresponding author row from the table.
-
-The entry parameter represents the delete button element that triggered the function.
-The function finds the grandparent element of the delete button (the table row) and removes it from the DOM.
-Overall, these scripts
 
 ```html
 <x-layouts.dashboard>
@@ -622,5 +645,77 @@ Overall, these scripts
     </script>
 </x-layouts.dashboard>
 ```
+The provided code represents form for adding authors to a specific paper.
+
+The form includes a section for adding authors to the paper. It consists of a table with input fields for the author's *first name*, *last name*, *email*, *affiliation*, and a dropdown menu for selecting the *country*.
+
+There is an "Add" button with the id "add-button". When clicked, it clones the first author row and appends it to the table of authors' list.
+Addition of new author depending on JavaScript code includes a jQuery function that handles the addition of new author rows. It clones the first author row and appends it to the table. It also clears the input fields in the cloned row.
+
+Each author row has a delete button with an onclick attribute that triggers the deleteEntry() function. This function removes the corresponding author row from the table.
+
+The first script includes the jQuery library by loading it from the CDN (Content Delivery Network). This allows the use of jQuery functions and selectors in the script.
+
+The jQuery(function($){}) syntax is a shortcut for the $(document).ready() function, which ensures that the script is executed when the DOM (Document Object Model) is fully loaded and ready to be manipulated.
+
+The script initializes variables authors_list and author_row.
+
+authors_list is assigned the jQuery object representing the element with the ID authors-list, which is the table body where author rows are added.
+author_row is assigned the cloned version of the first author row in the table.
+The $('#add-button').click() function is bound to the click event of the element with the ID add-button (the "Add" button). When this button is clicked, the function is executed.
+
+It appends a cloned version of author_row to the authors_list table.
+It sets the value of the last select element within the appended row to an empty string.
+It retrieves all input elements within the appended row and sets their values to empty strings using a loop.
+The second script defines the deleteEntry(entry) function, which is called when the delete button of an author row is clicked. The function is responsible for removing the corresponding author row from the table.
+
+The entry parameter represents the delete button element that triggered the function.
+The function finds the grandparent element of the delete button (the table row) and removes it from the DOM.
+Overall, these scripts
+
+
+
+The form includes a section for adding authors to the paper. It consists of a table with input fields for the author's **first name**, **last name**, **email**, **affiliation**, and a dropdown menu for selecting the **country**.
+
+## Adding Authors
+
+To add authors, click the "Add" button with the id "add-button". This button clones the first author row and appends it to the table of authors' list. The cloned row will have all input fields cleared and ready for new author information.
+
+## Removing Authors
+
+Each author row has a delete button with an onclick attribute that triggers the `deleteEntry()` function. This function removes the corresponding author row from the table.
+
+## Initialization
+
+The first script includes the jQuery library by loading it from the CDN (Content Delivery Network). This allows the use of jQuery functions and selectors in the script.
+
+The `jQuery(function($){})` syntax is a shortcut for the `$(document).ready()` function, which ensures that the script is executed when the DOM (Document Object Model) is fully loaded and ready to be manipulated.
+
+I included the jQuery library by adding the following script tag before the closing `</body>` tag:
+
+```html
+<script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js'></script>
+```
+
+The script initializes variables `authors_list` and `author_row`.
+
+- `authors_list` is assigned the jQuery object representing the element with the ID `authors-list`, which is the table body where author rows are added.
+- `author_row` is assigned the cloned version of the first author row in the table.
+
+## Adding New Authors
+
+The `$('#add-button').click()` function is bound to the click event of the element with the ID `add-button` (the "Add" button). When this button is clicked, the function is executed.
+
+- It appends a cloned version of `author_row` to the `authors_list` table.
+- It sets the value of the last select element within the appended row to an empty string.
+- It retrieves all input elements within the appended row and sets their values to empty strings using a loop.
+
+## Deleting Authors
+
+The second script defines the `deleteEntry(entry)` function, which is called when the delete button of an author row is clicked. The function is responsible for removing the corresponding author row from the table.
+
+- The `entry` parameter represents the delete button element that triggered the function.
+- The function finds the grandparent element of the delete button (the table row) and removes it from the DOM.
+
 
 [🔝 Back to contents](#contents)
