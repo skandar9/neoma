@@ -1,18 +1,22 @@
-The project is a web application that serves as a content management system for .. . It manage and present different types of content, including author guidelines, publication ethics, and general programming knowledge.
+Project overview:
+
+The project is a web application that serves as a content management system for publication center, It manage and present different types of content, including author guidelines, publication ethics, and general programming knowledge.
 The project includes contributions from multiple authors and editors
 Web application, a publishing company that specializes in publishing scientific research papers, articles, and journals
 
-The GeneralContentController class acts as the central controller for handling the application's general content management. It requires user authentication for accessing and modifying content, ensuring a secure environment for content management.
 
-The controller includes methods for retrieving and updating author guidelines and publication ethics content. The "get_author_guidelines" method retrieves the author guidelines from the database and renders a view to display them. The "upsert_author_guidelines" method allows authorized users to update the author guidelines by accepting the updated content and validating it. If the author guidelines exist in the database, the method updates them; otherwise, it creates a new entry.
 
-Similarly, the "get_publication_ethics" method retrieves the publication ethics content from the database and renders a view to display it. The "upsert_publication_ethics" method allows authorized users to update the publication ethics content by accepting the updated content and validating it. It follows a similar process of updating or creating a new entry depending on the existence of the content in the database.
+> :warning: **Warning:** This contents below ↓ contains just parts of my code.
+>                        You can access my full project files by clone it from my GitLab repository
+>                        (requires asking for my permissions  to grant you access to it):
+>                        https://gitlab.com/skandar.s1998/aim 
 
-The GeneralContentController class interacts with the GeneralContent model, which represents the database table storing the general content. It uses the "type" field to distinguish between different types of content, such as author guidelines and publication ethics. The model provides methods for retrieving and updating the content entries.
+## Contents
+(contains descriptive parts of my code)
 
-The project emphasizes good documentation practices and highlights the importance of the README.md file. The README.md file serves as the ultimate guide for open-source projects, providing comprehensive documentation. It covers essential aspects of the project, including setup instructions, usage guidelines, and other relevant information.
+[Tables and relations](#tables-and-relations)
 
-## Contents [contains parts of my code]
+[Project actions and progress(graph)](#project-graph)
 
 [Authentication](#authentication)
 
@@ -29,6 +33,24 @@ The project emphasizes good documentation practices and highlights the importanc
 ['Editor' modal (dashboard)](#editor-modal)
 
 [Add authors to specific paper. *Using JQuery & JavaScript* (dashboard)](#authors)
+
+
+### **tables-and-relations**
+
+![Logo](/images/tables.png)
+
+For more details about the content of the tables <a href="/neoma.pdf" target="_blank">Click here</a>
+
+[🔝 Back to contents](#contents)
+
+### **project-graph**
+
+This graph diagram represents the actions and progress for the project.
+
+![App Logo](/images/graph(1).png)
+![App Logo](/images/graph(2).png)
+
+[🔝 Back to contents](#contents)
 
 ### **authentication**
 
@@ -183,7 +205,7 @@ function upload_file($request_file, $prefix, $folder_name)
 
 ### **update-journal**
 
-app\Http\Controllers\JournalController.php:
+`app\Http\Controllers\JournalController.php`
 
 ```php
 public function update(Request $request, Journal $journal)
@@ -268,7 +290,7 @@ If the request contains `indexing_ids`, it performs the following steps:
 
 ### **upload/delete-file**
 
-app\helpers.php:
+`app\helpers.php`
 
 ```php
 .
@@ -289,11 +311,27 @@ function delete_file_if_exist($file)
 }
 ```
 
+The `upload_file` function is a utility function that handles file uploads within the application. It performs the following tasks:
+
+1. Takes a file as input and generates a unique filename for storage.
+2. Stores the file in the specified folder.
+3. Returns the relative path of the uploaded file.
+
+It takes three parameters:
+
+1. `$request_file`: The file obtained from the request.
+2. `$prefix`: A prefix string used to create a unique filename.
+3. `$folder_name`: The name of the folder where the file will be stored.
+
+The function returns the relative path of the uploaded file. This path is obtained by concatenating the `$folder_name` and the unique filename generated for the file.
+
+The `upload_file` function is placed within the app helper class, which provides common functions for various tasks. These helper functions are globally accessible throughout the application without needing to import or instantiate any specific class.
+
 [🔝 Back to contents](#contents)
 
 ### **archived_manuscripts**
 
-app\Http\Controllers\Dashboard\ManuscriptController.php:
+`app\Http\Controllers\Dashboard\ManuscriptController.php`
 
 ```php
 public function archived_manuscripts()
@@ -319,7 +357,7 @@ By clicking on the 'info' icon (as shown in the picture), it redirects to the de
 
 ### **editor_manuscripts()-relationship**
 
-**File:** `app\Models\User.php`
+`app\Models\User.php`
 
 ```php
 .
@@ -344,7 +382,7 @@ The `editor_manuscripts()` method defines a many-to-many relationship between th
 
 ### **show Manuscript**
 
-**File:** `app\Http\Controllers\Dashboard\ManuscriptController.php`
+`app\Http\Controllers\Dashboard\ManuscriptController.php`
 
 ```php
 public function show($uuid)
@@ -392,7 +430,7 @@ The 'manuscript_details' view can then utilize the provided data to present the 
 
 ### **Refuse Manuscript**
 
-**File:** `app\Http\Controllers\Dashboard\ManuscriptController.php`
+`app\Http\Controllers\Dashboard\ManuscriptController.php`
 
 ```php
 use App\Jobs\SendEmailsJob;
@@ -452,9 +490,10 @@ The `refuse()` method handles the refusal of a manuscript by the editor. It perf
 
 ### **editor-modal**
 
-![Editor modal](/images/editor-modal.png)
+![App Logo](/images/editor-modal.png)
 
-resources\views\dashboard\editor_view.blade.php:
+`resources\views\dashboard\editor_view.blade.php`
+
 ```html
 .
 .
@@ -565,7 +604,7 @@ The form consists of two sections:
 
 This section provides a form for adding authors to a specific paper. The form allows users to input information such as the author's first name, last name, email, affiliation, and country.
 
-resources\views\dashboard\paper_create.blade.php:
+`resources\views\dashboard\paper_create.blade.php`
 
 ```html
 <x-layouts.dashboard>
