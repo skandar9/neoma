@@ -9,10 +9,11 @@ Web application, a publishing company that specializes in publishing scientific 
 > :warning: **Warning:** This contents below ↓ contains just parts of my code.
 >                        You can access my full project files by clone it from my GitLab repository
 >                        (requires asking for my permissions  to grant you access to it):
->                        https://gitlab.com/skandar.s1998/aim 
+>                        https://gitlab.com/skandar.s1998/neoma 
 
 ## Contents
 (contains descriptive parts of my code)
+
 
 [Tables and relations](#tables-and-relations)
 
@@ -20,19 +21,20 @@ Web application, a publishing company that specializes in publishing scientific 
 
 [Authentication](#authentication)
 
-["Update journal" function](#update-journal)
+[Update journal](#update-journal)
 
 [Upload file & delete file if exist](#upload/delete-file)
 
 [Archived manuscripts](#archived_manuscripts)
 
-["Show manuscript" function](#show-manuscript)
+[Show specific manuscript](#show-manuscript)
 
-[Refuse manuscript](#refuse-manuscript)
+[Refuse specific manuscript](#refuse-manuscript)
 
-['Editor' modal (dashboard)](#editor-modal)
+[Editor modal (dashboard)](#editor-modal)
 
-[Add authors to specific paper. *Using JQuery & JavaScript* (dashboard)](#authors)
+[Add authors to a specific paper. *Using JQuery & JavaScript* (dashboard)](#add-authors-to-a-specific-paper)
+
 
 
 ### **tables-and-relations**
@@ -600,7 +602,9 @@ The form consists of two sections:
 
 [🔝 Back to contents](#contents)
 
-### **authors**
+### **add-authors-to-a-specific-paper**
+
+![App Logo](/images/add-authors.png)
 
 This section provides a form for adding authors to a specific paper. The form allows users to input information such as the author's first name, last name, email, affiliation, and country.
 
@@ -684,37 +688,13 @@ This section provides a form for adding authors to a specific paper. The form al
     </script>
 </x-layouts.dashboard>
 ```
-The provided code represents form for adding authors to a specific paper.
-
-The form includes a section for adding authors to the paper. It consists of a table with input fields for the author's *first name*, *last name*, *email*, *affiliation*, and a dropdown menu for selecting the *country*.
-
-There is an "Add" button with the id "add-button". When clicked, it clones the first author row and appends it to the table of authors' list.
-Addition of new author depending on JavaScript code includes a jQuery function that handles the addition of new author rows. It clones the first author row and appends it to the table. It also clears the input fields in the cloned row.
-
-Each author row has a delete button with an onclick attribute that triggers the deleteEntry() function. This function removes the corresponding author row from the table.
-
-The first script includes the jQuery library by loading it from the CDN (Content Delivery Network). This allows the use of jQuery functions and selectors in the script.
-
-The jQuery(function($){}) syntax is a shortcut for the $(document).ready() function, which ensures that the script is executed when the DOM (Document Object Model) is fully loaded and ready to be manipulated.
-
-The script initializes variables authors_list and author_row.
-
-authors_list is assigned the jQuery object representing the element with the ID authors-list, which is the table body where author rows are added.
-author_row is assigned the cloned version of the first author row in the table.
-The $('#add-button').click() function is bound to the click event of the element with the ID add-button (the "Add" button). When this button is clicked, the function is executed.
-
-It appends a cloned version of author_row to the authors_list table.
-It sets the value of the last select element within the appended row to an empty string.
-It retrieves all input elements within the appended row and sets their values to empty strings using a loop.
-The second script defines the deleteEntry(entry) function, which is called when the delete button of an author row is clicked. The function is responsible for removing the corresponding author row from the table.
-
-The entry parameter represents the delete button element that triggered the function.
-The function finds the grandparent element of the delete button (the table row) and removes it from the DOM.
-Overall, these scripts
-
-
 
 The form includes a section for adding authors to the paper. It consists of a table with input fields for the author's **first name**, **last name**, **email**, **affiliation**, and a dropdown menu for selecting the **country**.
+
+There is an "Add" button with the id "add-button". When clicked, it clones the first author row and appends it to the table of authors' list.
+Addition of new author depending on `JavaScript` code includes a `jQuery` function that handles the addition of new author rows. It clones the first author row and appends it to the table. It also clears the input fields in the cloned row.
+
+Each author row has a delete button with an onclick attribute that triggers the `deleteEntry() `function. This function removes the corresponding author row from the table.
 
 ## Adding Authors
 
