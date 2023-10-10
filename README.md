@@ -2,7 +2,7 @@ Project overview:
 
 The project is a web application that serves as a content management system for publication center, It manage and present different types of content, including author guidelines, publication ethics, and general programming knowledge.
 The project includes contributions from multiple authors and editors
-Web application, a publishing company that specializes in publishing scientific research papers, articles, and journals
+Web application, a publishing company that specializes in publishing scientific research papers, articles, and journals.
 
 I have developed an admin control panel using the Material Dashboard template and created APIs to provide data to the frontend side.
 
