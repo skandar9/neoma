@@ -4,7 +4,7 @@ The project is a web application that serves as a content management system for 
 The project includes contributions from multiple authors and editors
 Web application, a publishing company that specializes in publishing scientific research papers, articles, and journals
 
-
+I have developed an admin control panel using the Material Dashboard template and created APIs to provide data to the frontend side.
 
 > :warning: **Warning:** This contents below ↓ contains just parts of my code.
 >                        You can access my full project files by clone it from my GitLab repository
@@ -19,7 +19,7 @@ Web application, a publishing company that specializes in publishing scientific 
 
 [Project actions and progress(graph)](#project-graph)
 
-[Authentication](#authentication)
+[Login to the dashboard functionality](#dashboard-login)
 
 [Update journal](#update-journal)
 
@@ -51,6 +51,200 @@ This graph diagram represents the actions and progress for the project.
 
 ![App Logo](/images/graph(1).png)
 ![App Logo](/images/graph(2).png)
+
+[🔝 Back to contents](#contents)
+
+### **dashboard-login**
+
+![App Logo](/images/login.png)
+
+I used Laravel UI package in this project that provides a convenient way to generate the frontend boilerplate code for authentication views, such as login, registration, and password reset forms.
+
+I Run the following command to install the package:
+
+```shell
+composer require laravel/ui
+```
+
+This package I used to generate the authentication views.Specifically, I utilized the following file to facilitate the login process for the admin, granting access to their dashboard.
+
+`resources/views/auth/login.blade.php`: This file contains the HTML template for the login form. It includes form fields for the username and password, along with any necessary validation error messages.
+
+I depended on `Auth` Facade that is a core component of Laravel that provides convenient methods for user authentication. It is used to authenticate users and manage their sessions.
+
+### login functionality workflow:
+
+## Routes in `web.php`
+
+`routes\web.php`
+### Index Route
+
+```php
+Route::get('/', [PagesController::class, 'index'])->name('index');
+```
+This route is responsible for handling the homepage of the application. When a user visits the root URL, the `index` method of the `PagesController` will be executed.
+
+### Dashboard Route
+
+```php
+Route::get('/dashboard', [PagesController::class, 'dashboard'])->middleware(['auth'])->name('dashboard');
+```
+This route represents the dashboard page of the application. It is protected by the `'auth'` middleware, which means only authenticated users can access it. When a user visits the `/dashboard` URL, the `dashboard` method of the `PagesController` will be executed.
+
+
+## PagesController
+
+`app\Http\Controllers\PagesController.php`
+
+```php
+class PagesController extends Controller
+{
+    public function index(){
+        return redirect('/login');
+    }
+
+    public function dashboard(){
+        return view('dashboard');
+    }
+}
+```
+### `index` Method
+
+This method is responsible for handling the request to the homepage of the application. It performs a redirect to the `/login` URL. When a user visits the homepage, they will be redirected to the login page.
+
+## Authentication Route
+
+`routes\auth.php`
+
+```php
+Route::get('/login', [AuthenticatedSessionController::class, 'create'])
+                ->middleware('guest')
+                ->name('login');
+
+Route::post('/login', [AuthenticatedSessionController::class, 'store'])
+                ->middleware('guest');
+```
+### Login Route
+This route is responsible for rendering the login form. When a GET request is made to the `/login` URL, the `create` method of the `AuthenticatedSessionController` will be executed. This route is protected by the `'guest'` middleware, which ensures that only non-authenticated users can access the login page.
+
+### Login POST Route
+This route is responsible for handling the submission of the login form. When a POST request is made to the `/login` URL, the `store` method of the `AuthenticatedSessionController` will be executed. This route is also protected by the `'guest'` middleware.
+
+## AuthenticatedSessionController
+
+`app\Http\Controllers\Auth\AuthenticatedSessionController.php`
+
+```php
+class AuthenticatedSessionController extends Controller
+{
+    public function create()
+    {
+        return view('auth.login');
+    }
+
+    public function store(LoginRequest $request)
+    {
+        $request->authenticate();
+
+        $request->session()->regenerate();
+
+        return redirect()->intended(RouteServiceProvider::HOME);
+    }
+}
+```
+### `create` Method
+This method is responsible for displaying the login view. It returns the view named `'auth.login'`, which is the login form view. When this method is called, the login form will be rendered and displayed to the user.
+
+### `store` Method
+This method handles the incoming authentication request when the login form is submitted. It expects an instance of `LoginRequest` as a parameter, which contains the validation rules for the login request. The method calls the `authenticate` method on the request instance to perform the authentication. If the authentication is successful, the user's session is regenerated, and the user is redirected to the intended page (defined by `RouteServiceProvider::HOME`).
+
+## Login form view
+
+`resources\views\auth\login.blade.php`
+
+```html
+<x-layouts.guest>
+    <x-auth-card>
+        <x-slot name="logo">
+            <a href="/">
+                <img src="/img/aim.png" width="220px">
+            </a>
+        </x-slot>
+
+        <!-- Session Status -->
+        <x-auth-session-status class="mb-4" :status="session('status')" />
+
+        <!-- Validation Errors -->
+        <x-auth-validation-errors class="mb-4" :errors="$errors" />
+
+        <form method="POST" action="{{ route('login') }}">
+            @csrf
+
+            <!-- Username -->
+            <div>
+                <x-label for="username" :value="__('Username')" />
+                <x-input id="username" class="block mt-1 w-full" type="text" name="username" :value="old('username')" required autofocus />
+            </div>
+
+            <!-- Password -->
+            <div class="mt-4">
+                <x-label for="password" :value="__('Password')" />
+                <x-input id="password" class="block mt-1 w-full"
+                                type="password"
+                                name="password"
+                                required autocomplete="current-password" />
+            </div>
+
+            <!-- Remember Me -->
+            <div class="block mt-4">
+                <label for="remember_me" class="inline-flex items-center">
+                    <input id="remember_me" type="checkbox" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" name="remember">
+                    <span class="ml-2 text-sm text-gray-600">{{ __('Remember me') }}</span>
+                </label>
+            </div>
+
+            <div class="flex items-center justify-end mt-4">
+                @if (Route::has('password.request'))
+                    <a class="underline text-sm text-gray-600 hover:text-gray-900" href="{{ route('password.request') }}">
+                        {{ __('Forgot your password?') }}
+                    </a>
+                @endif
+
+                <x-button class="ml-3">
+                    {{ __('Log in') }}
+                </x-button>
+            </div>
+        </form>
+    </x-auth-card>
+</x-layouts.guest>
+```
+
+The `login.blade.php` file contains the HTML markup for the login form view.
+This file is installed with the package `laravel/ui`.
+
+[🔝 Back to contents](#contents)
+
+## LoginRequest
+
+`app\Http\Requests\Auth\LoginRequest.php`
+
+The `LoginRequest` class extends the `FormRequest` class in Laravel and is responsible for handling validation and authentication for the login form submission.
+### `authorize` Method
+This method determines if the user is authorized to make the login request. In this case, it always returns `true`, allowing any user to make the request.
+
+### `rules` Method
+This method defines the validation rules for the login request. It specifies that the `username` and `password` fields are required and must be of type `'string'`.
+
+### `authenticate` Method
+This method attempts to authenticate the user using the provided credentials. It first ensures that the request is not rate limited by calling the `ensureIsNotRateLimited` method. Then, it uses the `Auth::attempt` method to attempt authentication using the `username` and `password` fields from the request. It also includes the `remember` value as a boolean parameter to determine if the user wants to be remembered for future sessions. If the authentication attempt fails, the method hits the rate limiter by calling `RateLimiter::hit` and throws a `ValidationException` with the error message `'auth.failed'`. If the authentication attempt succeeds, the rate limiter is cleared by calling `RateLimiter::clear`.
+
+The `LoginRequest` class handles the validation of the login form inputs and performs the authentication logic, including rate limiting to protect against brute-force attacks.
+
+
+When the login credentials are successfully matched, the user is redirected to the admin dashboard page:
+
+![App Logo](/images/dashboard.png)
+
 
 [🔝 Back to contents](#contents)
 
